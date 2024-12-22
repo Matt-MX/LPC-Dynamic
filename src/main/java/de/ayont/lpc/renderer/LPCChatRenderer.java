@@ -19,32 +19,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class LPCChatRenderer implements ChatRenderer {
+    public static final char LEGACY_CHAR_CODE = (char)167;
 
     private final LuckPerms luckPerms;
     private final LPC plugin;
     private final MiniMessage miniMessage;
     private final boolean hasPapi;
-
-    private final Map<String, String> legacyToMiniMessageColors = new HashMap<>() {
-        {
-            put("&0", "<black>");
-            put("&1", "<dark_blue>");
-            put("&2", "<dark_green>");
-            put("&3", "<dark_aqua>");
-            put("&4", "<dark_red>");
-            put("&5", "<dark_purple>");
-            put("&6", "<gold>");
-            put("&7", "<gray>");
-            put("&8", "<dark_gray>");
-            put("&9", "<blue>");
-            put("&a", "<green>");
-            put("&b", "<aqua>");
-            put("&c", "<red>");
-            put("&d", "<light_purple>");
-            put("&e", "<yellow>");
-            put("&f", "<white>");
-        }
-    };
 
     public LPCChatRenderer(LPC plugin) {
         this.luckPerms = LuckPermsProvider.get();
@@ -64,9 +44,9 @@ public class LPCChatRenderer implements ChatRenderer {
         String plainMessage = PlainTextComponentSerializer.plainText().serialize(message);
 
         if (hasPermission) {
-            for (Map.Entry<String, String> entry : legacyToMiniMessageColors.entrySet()) {
-                plainMessage = plainMessage.replace(entry.getKey(), entry.getValue());
-            }
+            plainMessage = Formatter.convertLegacyHexToMiniMessage(
+                Formatter.convertLegacyHex(plainMessage)
+            );
         }
 
         String formatKey = "group-formats." + group;
@@ -102,9 +82,7 @@ public class LPCChatRenderer implements ChatRenderer {
                 .replace("{message-color}", metaData.getMetaValue("message-color") != null ? Objects.requireNonNull(metaData.getMetaValue("message-color")) : "");
 
         if (!hasPermission) {
-            for (Map.Entry<String, String> entry : legacyToMiniMessageColors.entrySet()) {
-                plainMessage = plainMessage.replace(entry.getValue(), entry.getKey());
-            }
+            plainMessage = Formatter.convertLegacyHex(plainMessage);
         }
 
         format = format.replace("{message}", plainMessage);
@@ -113,6 +91,6 @@ public class LPCChatRenderer implements ChatRenderer {
             format = PlaceholderAPI.setPlaceholders(source, format);
         }
 
-        return miniMessage.deserialize(format);
+        return Formatter.SMART.format(format);
     }
 }
